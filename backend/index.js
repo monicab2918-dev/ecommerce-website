@@ -3,13 +3,15 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const path = require("path"); // Added for serving React frontend
+const path = require("path");
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Temporary in-memory storage
+// --------------------
+// Temporary Data
+// --------------------
 let users = [];
 let products = [
   { id: 1, name: "Laptop", price: 50000, category: "Electronics" },
@@ -20,13 +22,11 @@ let products = [
 ];
 
 let carts = {};
-
 const SECRET_KEY = "secret123";
 
-// Welcome route
-app.get("/", (req, res) => {
-  res.send("Welcome to the E-Commerce Backend API");
-});
+// --------------------
+// API Routes
+// --------------------
 
 // User Signup
 app.post("/signup", async (req, res) => {
@@ -54,17 +54,13 @@ app.get("/products", (req, res) => {
   let { category, maxPrice } = req.query;
   let filtered = products;
 
-  if (category) {
-    filtered = filtered.filter(p => p.category === category);
-  }
-  if (maxPrice) {
-    filtered = filtered.filter(p => p.price <= parseInt(maxPrice));
-  }
+  if (category) filtered = filtered.filter(p => p.category === category);
+  if (maxPrice) filtered = filtered.filter(p => p.price <= parseInt(maxPrice));
 
   res.json(filtered);
 });
 
-// Add product (Admin feature)
+// Add product (Admin)
 app.post("/products", (req, res) => {
   const { name, price, category } = req.body;
   const newProduct = {
@@ -91,15 +87,18 @@ app.get("/cart/:email", (req, res) => {
   res.json(carts[email] || []);
 });
 
-// ------------------------
-// Serve React frontend
-// ------------------------
+// --------------------
+// Serve React Frontend
+// --------------------
 app.use(express.static(path.join(__dirname, "build")));
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
-// Start server
+
+// --------------------
+// Start Server
+// --------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Backend running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
