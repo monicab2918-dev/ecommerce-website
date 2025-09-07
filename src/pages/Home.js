@@ -1,49 +1,55 @@
 import React, { useEffect, useState } from "react";
+import ProductCard from "../components/ProductCard";
 
-function Home() {
+export default function Home() {
   const [products, setProducts] = useState([]);
+  const [category, setCategory] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:5000/products")
-      .then((res) => res.json())
-      .then((data) => setProducts(data))
-      .catch((err) => console.error(err));
-  }, []);
+    let url = `/products?`;
+    if (category) url += `category=${category}&`;
+    if (maxPrice) url += `maxPrice=${maxPrice}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => setProducts(data));
+  }, [category, maxPrice]);
 
-  const addToCart = async (productId) => {
-    const email = localStorage.getItem("email");
-    if (!email) {
-      alert("Login first!");
-      return;
-    }
-
-    await fetch("http://localhost:5000/cart", {
+  const addToCart = (productId) => {
+    const email = localStorage.getItem("userEmail");
+    if (!email) return alert("Please login first");
+    fetch("/cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, productId }),
-    });
-    alert("Added to cart!");
+    }).then(() => alert("Added to cart"));
   };
 
   return (
-    <div className="container">
-      <h2 className="title">Our Products</h2>
-      <div className="products">
-        {products.map((p) => (
-          <div key={p.id} className="product-card">
-            <img
-              src={`https://via.placeholder.com/200x150?text=${p.name}`}
-              alt={p.name}
-            />
-            <h3>{p.name}</h3>
-            <p className="price">₹{p.price}</p>
-            <p className="category">{p.category}</p>
-            <button onClick={() => addToCart(p.id)}>Add to Cart</button>
-          </div>
+    <div>
+      <h2>Products</h2>
+      <div style={{ marginBottom: "15px" }}>
+        <label>Category: </label>
+        <select onChange={e => setCategory(e.target.value)} value={category}>
+          <option value="">All</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Fashion">Fashion</option>
+        </select>
+
+        <label style={{ marginLeft: "15px" }}>Max Price: </label>
+        <input
+          type="number"
+          placeholder="Enter max price"
+          value={maxPrice}
+          onChange={e => setMaxPrice(e.target.value)}
+        />
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "15px" }}>
+        {products.map(p => (
+          <ProductCard key={p.id} product={p} addToCart={addToCart} />
         ))}
       </div>
     </div>
   );
 }
-
-export default Home;
