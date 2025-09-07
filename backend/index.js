@@ -10,7 +10,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // --------------------
-// Temporary Data
+// Temporary In-Memory Data
 // --------------------
 let users = [];
 let products = [
@@ -25,21 +25,27 @@ let carts = {};
 const SECRET_KEY = "secret123";
 
 // --------------------
-// API Routes
+// Auth Routes
 // --------------------
 
-// User Signup
+// Signup
 app.post("/signup", async (req, res) => {
   const { email, password } = req.body;
-  const hashed = await bcrypt.hash(password, 10);
-  users.push({ email, password: hashed });
+
+  // Check if user exists
+  const existingUser = users.find((u) => u.email === email);
+  if (existingUser) return res.status(400).json({ message: "User already exists" });
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  users.push({ email, password: hashedPassword });
   res.json({ message: "Signup successful" });
 });
 
-// User Login
+// Login
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  const user = users.find(u => u.email === email);
+  const user = users.find((u) => u.email === email);
+
   if (!user) return res.status(400).json({ message: "User not found" });
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -49,29 +55,37 @@ app.post("/login", async (req, res) => {
   res.json({ token });
 });
 
-// Get all products with filters
-app.get("/products", (req, res) => {
-  let { category, maxPrice } = req.query;
-  let filtered = products;
+// --------------------
+// Product Routes
+// --------------------
 
-  if (category) filtered = filtered.filter(p => p.category === category);
-  if (maxPrice) filtered = filtered.filter(p => p.price <= parseInt(maxPrice));
+// Get products (with optional filters)
+app.get("/products", (req, res) => {
+  const { category, maxPrice } = req.query;
+  let filtered = [...products];
+
+  if (category) filtered = filtered.filter((p) => p.category === category);
+  if (maxPrice) filtered = filtered.filter((p) => p.price <= parseInt(maxPrice));
 
   res.json(filtered);
 });
 
-// Add product (Admin)
+// Add new product (Admin feature)
 app.post("/products", (req, res) => {
   const { name, price, category } = req.body;
   const newProduct = {
     id: products.length + 1,
     name,
     price,
-    category
+    category,
   };
   products.push(newProduct);
   res.json({ message: "Product added", product: newProduct });
 });
+
+// --------------------
+// Cart Routes
+// --------------------
 
 // Add to cart
 app.post("/cart", (req, res) => {
@@ -81,7 +95,7 @@ app.post("/cart", (req, res) => {
   res.json({ message: "Item added to cart" });
 });
 
-// Get user cart
+// Get cart
 app.get("/cart/:email", (req, res) => {
   const { email } = req.params;
   res.json(carts[email] || []);
@@ -95,7 +109,6 @@ app.use(express.static(path.join(__dirname, "build")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "build", "index.html"));
 });
-
 
 // --------------------
 // Start Server

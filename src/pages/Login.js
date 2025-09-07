@@ -1,46 +1,45 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { API_URL } from "../config";
 
-export default function Login() {
+function Login({ setToken }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleLogin = () => {
-    fetch("/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.token) {
-          localStorage.setItem("userEmail", email);
-          alert("Login successful");
-        } else alert(data.message);
-      });
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(`${API_URL}/login`, { email, password });
+      localStorage.setItem("token", res.data.token);
+      setToken(res.data.token);
+      setMessage("Login successful!");
+    } catch (err) {
+      setMessage("Login failed. Try again!");
+    }
   };
 
   return (
-    <div style={formStyle}>
+    <div>
       <h2>Login</h2>
-      <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-      <input placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-      <button onClick={handleLogin} style={buttonStyle}>Login</button>
+      <form onSubmit={handleLogin}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit">Login</button>
+      </form>
+      <p>{message}</p>
     </div>
   );
 }
 
-const formStyle = {
-  display: "flex",
-  flexDirection: "column",
-  width: "250px",
-  gap: "10px",
-};
-
-const buttonStyle = {
-  padding: "5px 10px",
-  backgroundColor: "#007bff",
-  color: "white",
-  border: "none",
-  borderRadius: "5px",
-  cursor: "pointer",
-};
+export default Login;

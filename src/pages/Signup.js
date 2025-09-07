@@ -1,41 +1,43 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { API_URL } from "../config";
 
-export default function Signup() {
+function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleSignup = () => {
-    fetch("/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-      .then(res => res.json())
-      .then(data => alert(data.message));
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post(`${API_URL}/signup`, { email, password });
+      setMessage(res.data.message);
+    } catch (err) {
+      setMessage("Signup failed. Try again!");
+    }
   };
 
   return (
-    <div style={formStyle}>
+    <div>
       <h2>Signup</h2>
-      <input placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-      <input placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-      <button onClick={handleSignup} style={buttonStyle}>Signup</button>
+      <form onSubmit={handleSignup}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button type="submit">Signup</button>
+      </form>
+      <p>{message}</p>
     </div>
   );
 }
 
-const formStyle = {
-  display: "flex",
-  flexDirection: "column",
-  width: "250px",
-  gap: "10px",
-};
-
-const buttonStyle = {
-  padding: "5px 10px",
-  backgroundColor: "#28a745",
-  color: "white",
-  border: "none",
-  borderRadius: "5px",
-  cursor: "pointer",
-};
+export default Signup;
